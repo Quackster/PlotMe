@@ -8,6 +8,9 @@ loadbefore: [bPermissions, Multiverse-Core]
 softdepend: [WorldEdit, Vault, LWC]
 description: >
              Handles plot creation, management and protection
+
+api-version: 1.13
+
 commands:
     plotme:
       description: List PlotMe commands

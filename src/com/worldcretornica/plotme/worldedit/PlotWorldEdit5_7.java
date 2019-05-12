@@ -1,22 +1,19 @@
 package com.worldcretornica.plotme.worldedit;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.entity.Player;
-
 import com.sk89q.worldedit.LocalSession;
-import com.sk89q.worldedit.LocalWorld;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.bukkit.BukkitPlayer;
-import com.sk89q.worldedit.masks.RegionMask;
+import com.sk89q.worldedit.function.mask.RegionMask;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.worldcretornica.plotme.Plot;
 import com.worldcretornica.plotme.PlotManager;
 import com.worldcretornica.plotme.PlotMe;
-import com.sk89q.worldedit.masks.Mask;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 @SuppressWarnings({ "deprecation", "unused" })
 public class PlotWorldEdit5_7 implements PlotWorldEdit {
@@ -47,10 +44,10 @@ public class PlotWorldEdit5_7 implements PlotWorldEdit {
 				top = PlotManager.getPlotTopLoc(w, id);
 				
 				BukkitPlayer player = PlotMe.worldeditplugin.wrapPlayer(p);
-				LocalWorld world = player.getWorld();
-						
-				Vector pos1 = new Vector(bottom.getBlockX(), bottom.getBlockY(), bottom.getBlockZ());
-				Vector pos2 = new Vector(top.getBlockX(), top.getBlockY(), top.getBlockZ());
+				com.sk89q.worldedit.world.World world = player.getWorld();
+
+				BlockVector3 pos1 = BlockVector3.at(bottom.getBlockX(), bottom.getBlockY(), bottom.getBlockZ());
+				BlockVector3 pos2 = BlockVector3.at(top.getBlockX(), top.getBlockY(), top.getBlockZ());
 						
 				CuboidRegion cr = new CuboidRegion(world, pos1, pos2);
 				
@@ -88,10 +85,10 @@ public class PlotWorldEdit5_7 implements PlotWorldEdit {
 		if(result == null)
 		{
 			BukkitPlayer player = PlotMe.worldeditplugin.wrapPlayer(p);
-			LocalWorld world = player.getWorld();
-					
-			Vector pos1 = new Vector(bottom.getBlockX(), bottom.getBlockY(), bottom.getBlockZ());
-			Vector pos2 = new Vector(top.getBlockX(), top.getBlockY(), top.getBlockZ());
+			com.sk89q.worldedit.world.World world = player.getWorld();
+
+			BlockVector3 pos1 = BlockVector3.at(bottom.getBlockX(), bottom.getBlockY(), bottom.getBlockZ());
+			BlockVector3 pos2 = BlockVector3.at(top.getBlockX(), top.getBlockY(), top.getBlockZ());
 					
 			CuboidRegion cr = new CuboidRegion(world, pos1, pos2);
 			

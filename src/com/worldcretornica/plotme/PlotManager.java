@@ -23,9 +23,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.InventoryHolder;
 
-import com.griefcraft.lwc.LWC;
-import com.griefcraft.model.Protection;
-
 public class PlotManager
 {			
 	public static String getPlotId(Location loc)
@@ -236,10 +233,10 @@ public class PlotManager
 		
 		PlotMapInfo pmi = getMap(w);
 		int h = pmi.RoadHeight;
-		int wallId = pmi.WallBlockId;
-		byte wallValue = pmi.WallBlockValue;
-		int fillId = pmi.PlotFloorBlockId;
-		byte fillValue = pmi.PlotFloorBlockValue;
+		Material wallId = pmi.WallBlockId;
+		Material wallValue = pmi.WallBlockValue;
+		Material fillId = pmi.PlotFloorBlockId;
+		Material fillValue = pmi.PlotFloorBlockValue;
 				
 		if(bottomPlot1.getBlockX() == bottomPlot2.getBlockX())
 		{
@@ -285,11 +282,11 @@ public class PlotManager
 					{
 						if(isWallX && (x == minX || x == maxX))
 						{
-							w.getBlockAt(x, y, z).setTypeIdAndData(wallId, wallValue, true);
+							w.getBlockAt(x, y, z).setType(wallId,true);
 						}
 						else if(!isWallX && (z == minZ || z == maxZ))
 						{
-							w.getBlockAt(x, y, z).setTypeIdAndData(wallId, wallValue, true);
+							w.getBlockAt(x, y, z).setType(wallId, true);
 						}
 						else
 						{
@@ -298,7 +295,7 @@ public class PlotManager
 					}
 					else
 					{
-						w.getBlockAt(x, y, z).setTypeIdAndData(fillId, fillValue, true);
+						w.getBlockAt(x, y, z).setType(fillId, true);
 					}
 				}
 			}
@@ -320,7 +317,7 @@ public class PlotManager
 		
 		PlotMapInfo pmi = getMap(w);
 		int h = pmi.RoadHeight;
-		int fillId = pmi.PlotFloorBlockId;
+		Material fillId = pmi.PlotFloorBlockId;
 				
 		
 		minX = Math.min(topPlot1.getBlockX(), topPlot2.getBlockX());
@@ -341,7 +338,7 @@ public class PlotManager
 					}
 					else
 					{
-						w.getBlockAt(x, y, z).setTypeId(fillId);
+						w.getBlockAt(x, y, z).setType(fillId);
 					}
 				}
 			}
@@ -414,7 +411,7 @@ public class PlotManager
 						
 		Block bsign = pillar.add(0, 0, -1).getBlock();
 		bsign.setType(Material.AIR);
-		bsign.setTypeIdAndData(Material.WALL_SIGN.getId(), (byte) 2, false);
+		bsign.setType(Material.WALL_SIGN, false);
 		
 		String id = getPlotId(new Location(world, bottomX(plot.id, world), 0, bottomZ(plot.id, world)));
 		
@@ -464,7 +461,7 @@ public class PlotManager
 							
 			Block bsign = pillar.clone().add(-1, 0, 0).getBlock();
 			bsign.setType(Material.AIR);
-			bsign.setTypeIdAndData(Material.WALL_SIGN.getId(), (byte) 4, false);
+			bsign.setType(Material.WALL_SIGN, false);
 			
 			Sign sign = (Sign) bsign.getState();
 			
@@ -487,7 +484,7 @@ public class PlotManager
 				{
 					bsign = pillar.clone().add(-1, 0, 1).getBlock();
 					bsign.setType(Material.AIR);
-					bsign.setTypeIdAndData(Material.WALL_SIGN.getId(), (byte) 4, false);
+					bsign.setType(Material.WALL_SIGN, false);
 					
 					sign = (Sign) bsign.getState();
 				}
@@ -698,11 +695,11 @@ public class PlotManager
 					
 										
 					if(y == 0)
-						block.setTypeId(pmi.BottomBlockId);
+						block.setType(pmi.BottomBlockId);
 					else if(y < pmi.RoadHeight)
-						block.setTypeId(pmi.PlotFillingBlockId);
+						block.setType(pmi.PlotFillingBlockId);
 					else if(y == pmi.RoadHeight)
-						block.setTypeId(pmi.PlotFloorBlockId);
+						block.setType(pmi.PlotFloorBlockId);
 					else
 					{
 						if(y == (pmi.RoadHeight + 1) && 
@@ -715,7 +712,7 @@ public class PlotManager
 						}
 						else
 						{
-							block.setTypeIdAndData(0, (byte) 0, false); //.setType(Material.AIR);
+							block.setType(Material.AIR, false); //.setType(Material.AIR);
 						}
 					}
 				}
@@ -795,28 +792,25 @@ public class PlotManager
     private static void setWall(Block block, String currentblockid)
 	{
 		
-		int blockId;
-		byte blockData = 0;
+		Material blockId;
 		PlotMapInfo pmi = getMap(block);
 		
 		if(currentblockid.contains(":"))
 		{
 			try
 			{
-				blockId = Integer.parseInt(currentblockid.substring(0, currentblockid.indexOf(":")));
-				blockData = Byte.parseByte(currentblockid.substring(currentblockid.indexOf(":") + 1));
+				blockId = Material.valueOf(currentblockid.substring(0, currentblockid.indexOf(":")));
 			}
 			catch(NumberFormatException e)
 			{
 				blockId = pmi.WallBlockId;
-				blockData = pmi.WallBlockValue;
 			}
 		}
 		else
 		{
 			try
 			{
-				blockId = Integer.parseInt(currentblockid);
+				blockId = Material.valueOf(currentblockid);
 			}
 			catch(NumberFormatException e)
 			{
@@ -824,7 +818,7 @@ public class PlotManager
 			}
 		}
 		
-		block.setTypeIdAndData(blockId, blockData, true);
+		block.setType(blockId, true);
 	}
 	
 	
@@ -866,17 +860,14 @@ public class PlotManager
 				for(int y = 0; y < w.getMaxHeight() ; y++)
 				{
 					plot1Block = w.getBlockAt(new Location(w, x, y, z));
-                    int plot1Type = plot1Block.getTypeId();
-                    byte plot1Data = plot1Block.getData();
+                    Material plot1Type = plot1Block.getType();
 					
 					plot2Block = w.getBlockAt(new Location(w, x - distanceX, y, z - distanceZ));
 					
-                    int plot2Type = plot2Block.getTypeId();
-                    byte plot2Data = plot2Block.getData();
+                    Material plot2Type = plot2Block.getType();
 					
 					//plot1Block.setTypeId(plot2Type);
-					plot1Block.setTypeIdAndData(plot2Type, plot2Data, false);
-					plot1Block.setData(plot2Data);
+					plot1Block.setType(plot2Type, false);;
 					
 					//net.minecraft.server.World world = ((org.bukkit.craftbukkit.CraftWorld) w).getHandle();
 					//world.setRawTypeIdAndData(plot1Block.getX(), plot1Block.getY(), plot1Block.getZ(), plot2Type, plot2Data);
@@ -884,8 +875,7 @@ public class PlotManager
 					
 					
 					//plot2Block.setTypeId(plot1Type);
-					plot2Block.setTypeIdAndData(plot1Type, plot1Data, false);
-					plot2Block.setData(plot1Data);
+					plot2Block.setType(plot1Type, false);
 					//world.setRawTypeIdAndData(plot2Block.getX(), plot2Block.getY(), plot2Block.getZ(), plot1Type, plot1Data);
 				}
 			}
@@ -1148,7 +1138,7 @@ public class PlotManager
 		if(pmi == null)
 			return false;
 		else
-			return pmi.UseEconomy && PlotMe.globalUseEconomy && PlotMe.economy != null;
+			return false;//return pmi.UseEconomy && PlotMe.globalUseEconomy && PlotMe.economy != null;
 	}
 	
 	public static boolean isEconomyEnabled(String name)
@@ -1163,14 +1153,15 @@ public class PlotManager
 	
 	public static boolean isEconomyEnabled(Player p)
 	{
-		if(PlotMe.economy == null) return false;
+		/*if(PlotMe.economy == null) return false;
 		
 		PlotMapInfo pmi = getMap(p);
 		
 		if(pmi == null)
 			return false;
 		else
-			return pmi.UseEconomy && PlotMe.globalUseEconomy;
+			return pmi.UseEconomy && PlotMe.globalUseEconomy;*/
+		return false;
 	}
 	
 	public static boolean isEconomyEnabled(Block b)
@@ -1536,7 +1527,7 @@ public class PlotManager
 							Block block = w.getBlockAt(x + xx, y, z + zz);
 							blocks[x][z][y] = block.getState();
 							
-							if(PlotMe.usinglwc)
+							/*if(PlotMe.usinglwc)
 							{
 								LWC lwc = com.griefcraft.lwc.LWC.getInstance();
 								//Material material = block.getType();
@@ -1567,10 +1558,10 @@ public class PlotManager
 									            lwc.sendLocale(p, "protection.internalerror", "id", "BLOCK_BREAK");
 									            e.printStackTrace();
 									        }
-										}*/
+										}
 									}
 								}
-							}
+							}*/
 						}
 					}
 				}
@@ -1593,7 +1584,7 @@ public class PlotManager
 								Block newblock = w.getBlockAt(x + xx, y, z + zz);
 								BlockState oldblock = blocks[x][z][y];
 								
-								newblock.setTypeIdAndData(oldblock.getTypeId(), oldblock.getRawData(), false);
+								newblock.setType(oldblock.getType(), false);
 								oldblock.update();
 								
 								//blocks[x][z][y].update(true);
@@ -1632,7 +1623,7 @@ public class PlotManager
 	
 	public static void RemoveLWC(World w, Plot plot)
 	{
-		if(PlotMe.usinglwc)
+		/*if(PlotMe.usinglwc)
 		{
 			
 			Location bottom = getBottom(w, plot);
@@ -1657,7 +1648,7 @@ public class PlotManager
 					}
 				}
 			});
-	    }
+	    }*/
 	}
 	
 	public static void UpdatePlayerNameFromId(final UUID uuid, final String name) {

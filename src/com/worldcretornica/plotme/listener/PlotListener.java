@@ -350,9 +350,9 @@ public class PlotListener implements Listener
 			}
 			else
 			{				
-				if(pmi.ProtectedBlocks.contains(b.getTypeId()))
+				if(pmi.ProtectedBlocks.contains(b.getType().name()))
 				{
-					if(!PlotMe.cPerms(player, "plotme.unblock." + b.getTypeId()))
+					if(!PlotMe.cPerms(player, "plotme.unblock." + b.getType().name().toLowerCase()))
 						blocked = true;
 				}
 						
@@ -542,7 +542,7 @@ public class PlotListener implements Listener
 	{
 		Block b = event.getRetractLocation().getBlock();
 		
-		if(PlotManager.isPlotWorld(b) && event.getBlock().getType() == Material.PISTON_STICKY_BASE)
+		if(PlotManager.isPlotWorld(b) && event.getBlock().getType() == Material.PISTON_HEAD)
 		{
 			String id = PlotManager.getPlotId(b.getLocation());
 									

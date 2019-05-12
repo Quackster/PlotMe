@@ -1,5 +1,7 @@
 package com.worldcretornica.plotme;
 
+import org.bukkit.Material;
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -9,19 +11,19 @@ public class PlotMapInfo {
 	public int PlotAutoLimit;
 	public int PathWidth;
 	
-	public short BottomBlockId;
-	public byte BottomBlockValue;
-	public short WallBlockId;
-	public byte WallBlockValue;
-	public short PlotFloorBlockId;
-	public byte PlotFloorBlockValue;
-	public short PlotFillingBlockId;
-	public byte PlotFillingBlockValue;
+	public Material BottomBlockId;
+	public Material BottomBlockValue;
+	public Material WallBlockId;
+	public Material WallBlockValue;
+	public Material PlotFloorBlockId;
+	public Material PlotFloorBlockValue;
+	public Material PlotFillingBlockId;
+	public Material PlotFillingBlockValue;
 	
-	public short RoadMainBlockId;
-	public byte RoadMainBlockValue;
-	public short RoadStripeBlockId;
-	public byte RoadStripeBlockValue;
+	public Material RoadMainBlockId;
+	public Material RoadMainBlockValue;
+	public Material RoadStripeBlockId;
+	public Material RoadStripeBlockValue;
 	
 	public HashMap<String, Plot> plots;
 	public int RoadHeight;
@@ -31,8 +33,7 @@ public class PlotMapInfo {
 	public String ForSaleWallBlockId;
 	public String AuctionWallBlockId;
 	
-	public List<Integer> ProtectedBlocks;
-	
+	public List<String> ProtectedBlocks;
 	public List<String> PreventedItems;
 
 	public boolean UseEconomy;

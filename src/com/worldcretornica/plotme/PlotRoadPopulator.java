@@ -3,6 +3,7 @@ package com.worldcretornica.plotme;
 import java.util.Random;
 
 import org.bukkit.Chunk;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.generator.BlockPopulator;
 
@@ -10,23 +11,23 @@ public class PlotRoadPopulator extends BlockPopulator {
     private double plotsize;
     private double pathsize;
 
-    private byte wall;
-    private byte floor1;
-    private byte floor2;
+    private Material wall;
+    private Material floor1;
+    private Material floor2;
 
-    private byte pillarh1;
-    private byte pillarh2;
+    private Material pillarh1;
+    private Material pillarh2;
 
     private int roadheight;
 
     public PlotRoadPopulator() {
         plotsize = 32;
         pathsize = 7;
-        wall = 0;
-        floor2 = 2;
-        floor1 = 0;
-        pillarh1 = 4;
-        pillarh2 = 8;
+        wall = Material.AIR;
+        floor2 = Material.GRASS;
+        floor1 = Material.AIR;
+        pillarh1 = Material.COBBLESTONE;
+        pillarh2 = Material.WATER;
         roadheight = 64;
     }
 
@@ -191,7 +192,7 @@ public class PlotRoadPopulator extends BlockPopulator {
      */
 
     @SuppressWarnings("deprecation")
-    private void setData(World w, int x, int y, int z, byte val) {
-        w.getBlockAt(x, y, z).setData(val, false);
+    private void setData(World w, int x, int y, int z, Material val) {
+        w.getBlockAt(x, y, z).setType(val, false);
     }
 }

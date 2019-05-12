@@ -1,15 +1,8 @@
 package com.worldcretornica.plotme;
 
 import com.worldcretornica.plotme.utils.MinecraftFontWidthCalculator;
-
-import net.milkbowl.vault.economy.EconomyResponse;
-
 import org.apache.commons.lang.StringUtils;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -169,20 +162,8 @@ public class PMCommand implements CommandExecutor {
 							return protect(p, args);
 						}
 
-						if (a0.equalsIgnoreCase(C("CommandSell"))) {
-							return sell(p, args);
-						}
 						if (a0.equalsIgnoreCase(C("CommandDispose"))) {
 							return dispose(p, args);
-						}
-						if (a0.equalsIgnoreCase(C("CommandAuction"))) {
-							return auction(p, args);
-						}
-						if (a0.equalsIgnoreCase(C("CommandBuy"))) {
-							return buy(p, args);
-						}
-						if (a0.equalsIgnoreCase(C("CommandBid"))) {
-							return bid(p, args);
 						}
 						if (a0.startsWith(C("CommandHome")) || a0.startsWith("h")) {
 							return home(p, args);
@@ -227,363 +208,10 @@ public class PMCommand implements CommandExecutor {
 		return true;
 	}
 
-	private boolean bid(Player p, String[] args) {
-		if (PlotManager.isEconomyEnabled(p)) {
-			if (PlotMe.cPerms(p, "PlotMe.use.bid")) {
-				String id = PlotManager.getPlotId(p.getLocation());
 
-				if (id.equals("")) {
-					Send(p, RED + C("MsgNoPlotFound"));
-				} else if (!PlotManager.isPlotAvailable(id, p)) {
-					Plot plot = PlotManager.getPlotById(p, id);
 
-					if (plot.auctionned) {
-						String bidder = p.getName();
-						OfflinePlayer playerbidder = p;
 
-						if (plot.owner.equalsIgnoreCase(bidder)) {
-							Send(p, RED + C("MsgCannotBidOwnPlot"));
-						} else if (args.length == 2) {
-							double bid = 0;
-							double currentbid = plot.currentbid;
-							String currentbidder = plot.currentbidder;
-							OfflinePlayer playercurrentbidder = Bukkit.getOfflinePlayer(plot.currentbidderId);
-									
-							try {
-								bid = Double.parseDouble(args[1]);
-							} catch (NumberFormatException ignored) {
-							}
 
-							boolean equals = currentbidder.equals("");
-							if (bid < currentbid) {
-								Send(p, RED + C("MsgInvalidBidMustBeAbove") + " " + RESET + f(plot.currentbid, false));
-							} else if (bid == currentbid) {
-								if (!equals) {
-									Send(p, RED + C("MsgInvalidBidMustBeAbove") + " " + RESET + f(plot.currentbid, false));
-								} else {
-									double balance = PlotMe.economy.getBalance(playerbidder);
-
-									if (bid >= balance && !currentbidder.equals(bidder) || currentbidder.equals(bidder) && bid > (balance + currentbid)) {
-										Send(p, RED + C("MsgNotEnoughBid"));
-									} else {
-										EconomyResponse er = PlotMe.economy.withdrawPlayer(playerbidder, bid);
-
-										if (er.transactionSuccess()) {
-
-											plot.currentbidder = bidder;
-											plot.currentbid = bid;
-
-											plot.updateField("currentbidder", bidder);
-											plot.updateField("currentbid", bid);
-
-											PlotManager.setSellSign(p.getWorld(), plot);
-
-											Send(p, C("MsgBidAccepted") + " " + f(-bid));
-
-											if (isAdv) {
-												PlotMe.logger.info(LOG + bidder + " bid " + bid + " on plot " + id);
-											}
-										} else {
-											Send(p, er.errorMessage);
-											warn(er.errorMessage);
-										}
-									}
-								}
-							} else {
-								double balance = PlotMe.economy.getBalance(playerbidder);
-
-								if (bid >= balance && !currentbidder.equals(bidder) ||
-										    currentbidder.equals(bidder) && bid > (balance + currentbid)) {
-									Send(p, RED + C("MsgNotEnoughBid"));
-								} else {
-									EconomyResponse er = PlotMe.economy.withdrawPlayer(playerbidder, bid);
-
-									if (er.transactionSuccess()) {
-										if (!equals) {
-											EconomyResponse er2 = PlotMe.economy.depositPlayer(playercurrentbidder, currentbid);
-
-											if (!er2.transactionSuccess()) {
-												Send(p, er2.errorMessage);
-												warn(er2.errorMessage);
-											} else {
-												for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-													if (player.getName().equalsIgnoreCase(currentbidder)) {
-														Send(player, C("MsgOutbidOnPlot") + " " + id + " " + C("MsgOwnedBy") + " " + plot.owner + ". " + f(bid));
-														break;
-													}
-												}
-											}
-										}
-
-										plot.currentbidder = bidder;
-										plot.currentbid = bid;
-
-										plot.updateField("currentbidder", bidder);
-										plot.updateField("currentbid", bid);
-
-										PlotManager.setSellSign(p.getWorld(), plot);
-
-										Send(p, C("MsgBidAccepted") + " " + f(-bid));
-
-										if (isAdv) {
-											PlotMe.logger.info(LOG + bidder + " bid " + bid + " on plot " + id);
-										}
-									} else {
-										Send(p, er.errorMessage);
-										warn(er.errorMessage);
-									}
-								}
-							}
-						} else {
-							Send(p, C("WordUsage") + ": " + RED + "/plotme " +
-									        C("CommandBid") + " <" + C("WordAmount") + "> " +
-									        RESET + C("WordExample") + ": " + RED + "/plotme " + C("CommandBid") + " 100");
-						}
-					} else {
-						Send(p, RED + C("MsgPlotNotAuctionned"));
-					}
-				} else {
-					Send(p, RED + C("MsgThisPlot") + "(" + id + ") " + C("MsgHasNoOwner"));
-				}
-			} else {
-				Send(p, RED + C("MsgPermissionDenied"));
-			}
-		} else {
-			Send(p, RED + C("MsgEconomyDisabledWorld"));
-		}
-		return true;
-	}
-
-	private boolean buy(Player p, String[] args) {
-		if (PlotManager.isEconomyEnabled(p)) {
-			if (PlotMe.cPerms(p, "PlotMe.use.buy") || PlotMe.cPerms(p, "PlotMe.admin.buy")) {
-				Location l = p.getLocation();
-				String id = PlotManager.getPlotId(l);
-
-				if (id.equals("")) {
-					Send(p, RED + C("MsgNoPlotFound"));
-				} else if (!PlotManager.isPlotAvailable(id, p)) {
-					Plot plot = PlotManager.getPlotById(p, id);
-
-					if (!plot.forsale) {
-						Send(p, RED + C("MsgPlotNotForSale"));
-					} else {
-						String buyer = p.getName();
-
-						if (plot.owner.equalsIgnoreCase(buyer)) {
-							Send(p, RED + C("MsgCannotBuyOwnPlot"));
-						} else {
-							int plotlimit = PlotMe.getPlotLimit(p);
-
-							if (plotlimit != -1 && PlotManager.getNbOwnedPlot(p) >= plotlimit) {
-								Send(p, C("MsgAlreadyReachedMaxPlots") + " (" +
-										        PlotManager.getNbOwnedPlot(p) + "/" + PlotMe.getPlotLimit(p) + "). " +
-										        C("WordUse") + " " + RED + "/plotme " + C("CommandHome") + RESET + " " + C("MsgToGetToIt"));
-							} else {
-								World w = p.getWorld();
-
-								double cost = plot.customprice;
-
-								if (PlotMe.economy.getBalance(p) < cost) {
-									Send(p, RED + C("MsgNotEnoughBuy"));
-								} else {
-									EconomyResponse er = PlotMe.economy.withdrawPlayer(p, cost);
-
-									if (er.transactionSuccess()) {
-										String oldowner = plot.owner;
-										OfflinePlayer playercurrentbidder = Bukkit.getOfflinePlayer(plot.ownerId);
-
-										if (!oldowner.equalsIgnoreCase("$Bank$")) {
-											EconomyResponse er2 = PlotMe.economy.depositPlayer(playercurrentbidder, cost);
-
-											if (!er2.transactionSuccess()) {
-												Send(p, RED + er2.errorMessage);
-												warn(er2.errorMessage);
-											} else {
-												for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-													if (player.getName().equalsIgnoreCase(oldowner)) {
-														Send(player, C("WordPlot") + " " + id + " " +
-																             C("MsgSoldTo") + " " + buyer + ". " + f(cost));
-														break;
-													}
-												}
-											}
-										}
-
-										plot.owner = buyer;
-										plot.customprice = 0;
-										plot.forsale = false;
-
-										plot.updateField("owner", buyer);
-										plot.updateField("customprice", 0);
-										plot.updateField("forsale", false);
-
-										PlotManager.adjustWall(l);
-										PlotManager.setSellSign(w, plot);
-										PlotManager.setOwnerSign(w, plot);
-
-										Send(p, C("MsgPlotBought") + " " + f(-cost));
-
-										if (isAdv) {
-											PlotMe.logger.info(LOG + buyer + " " + C("MsgBoughtPlot") + " " + id + " " + C("WordFor") + " " + cost);
-										}
-									} else {
-										Send(p, RED + er.errorMessage);
-										warn(er.errorMessage);
-									}
-								}
-							}
-						}
-					}
-				} else {
-					Send(p, RED + C("MsgThisPlot") + "(" + id + ") " + C("MsgHasNoOwner"));
-				}
-			} else {
-				Send(p, RED + C("MsgPermissionDenied"));
-			}
-		} else {
-			Send(p, RED + C("MsgEconomyDisabledWorld"));
-		}
-		return true;
-	}
-
-	private boolean auction(Player p, String[] args) {
-		if (PlotManager.isEconomyEnabled(p)) {
-			PlotMapInfo pmi = PlotManager.getMap(p);
-
-			if (pmi.CanPutOnSale) {
-				if (PlotMe.cPerms(p, "PlotMe.use.auction") || PlotMe.cPerms(p, "PlotMe.admin.auction")) {
-					String id = PlotManager.getPlotId(p.getLocation());
-
-					if (id.equals("")) {
-						Send(p, RED + C("MsgNoPlotFound"));
-					} else if (!PlotManager.isPlotAvailable(id, p)) {
-						Plot plot = PlotManager.getPlotById(p, id);
-
-						String name = p.getName();
-
-						if (plot.owner.equalsIgnoreCase(name) || PlotMe.cPerms(p, "PlotMe.admin.auction")) {
-							World w = p.getWorld();
-
-							if (plot.auctionned) {
-								if (plot.currentbidder != null) {
-									if (!plot.currentbidder.equalsIgnoreCase("")) {
-										if (!PlotMe.cPerms(p, "PlotMe.admin.auction")) {
-											Send(p, RED + C("MsgPlotHasBidsAskAdmin"));
-										} else {
-											if (plot.currentbidder != null) {
-												OfflinePlayer playercurrentbidder = Bukkit.getOfflinePlayer(plot.currentbidderId);
-												EconomyResponse er = PlotMe.economy.depositPlayer(playercurrentbidder, plot.currentbid);
-
-												if (!er.transactionSuccess()) {
-													Send(p, RED + er.errorMessage);
-													warn(er.errorMessage);
-												} else {
-													for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-														if (plot.currentbidder != null && player.getName().equalsIgnoreCase(plot.currentbidder)) {
-															Send(player, C("MsgAuctionCancelledOnPlot") +
-																	             " " + id + " " + C("MsgOwnedBy") + " " + plot.owner + ". " + f(plot.currentbid));
-															break;
-														}
-													}
-												}
-											}
-
-											plot.auctionned = false;
-											PlotManager.adjustWall(p.getLocation());
-											PlotManager.setSellSign(w, plot);
-											plot.currentbid = 0;
-											plot.currentbidder = "";
-
-											plot.updateField("currentbid", 0);
-											plot.updateField("currentbidder", "");
-											plot.updateField("auctionned", false);
-
-											Send(p, C("MsgAuctionCancelled"));
-
-											if (isAdv) {
-												PlotMe.logger.info(LOG + name + " " + C("MsgStoppedTheAuctionOnPlot") + " " + id);
-											}
-										}
-									} else {
-										plot.auctionned = false;
-										PlotManager.adjustWall(p.getLocation());
-										PlotManager.setSellSign(w, plot);
-										plot.currentbid = 0;
-										plot.currentbidder = "";
-
-										plot.updateField("currentbid", 0);
-										plot.updateField("currentbidder", "");
-										plot.updateField("auctionned", false);
-
-										Send(p, C("MsgAuctionCancelled"));
-
-										if (isAdv) {
-											PlotMe.logger.info(LOG + name + " " + C("MsgStoppedTheAuctionOnPlot") + " " + id);
-										}
-									}
-								} else {
-									plot.auctionned = false;
-									PlotManager.adjustWall(p.getLocation());
-									PlotManager.setSellSign(w, plot);
-									plot.currentbid = 0;
-									plot.currentbidder = "";
-
-									plot.updateField("currentbid", 0);
-									plot.updateField("currentbidder", "");
-									plot.updateField("auctionned", false);
-
-									Send(p, C("MsgAuctionCancelled"));
-
-									if (isAdv) {
-										PlotMe.logger.info(LOG + name + " " + C("MsgStoppedTheAuctionOnPlot") + " " + id);
-									}
-								}
-							} else {
-								double bid = 1;
-
-								if (args.length == 2) {
-									try {
-										bid = Double.parseDouble(args[1]);
-									} catch (NumberFormatException ignored) {
-									}
-								}
-
-								if (bid < 0) {
-									Send(p, RED + C("MsgInvalidAmount"));
-								} else {
-									plot.currentbid = bid;
-									plot.auctionned = true;
-									PlotManager.adjustWall(p.getLocation());
-									PlotManager.setSellSign(w, plot);
-
-									plot.updateField("currentbid", bid);
-									plot.updateField("auctionned", true);
-
-									Send(p, C("MsgAuctionStarted"));
-
-									if (isAdv) {
-										PlotMe.logger.info(LOG + name + " " + C("MsgStartedAuctionOnPlot") + " " + id + " " + C("WordAt") + " " + bid);
-									}
-								}
-							}
-						} else {
-							Send(p, RED + C("MsgDoNotOwnPlot"));
-						}
-					} else {
-						Send(p, RED + C("MsgThisPlot") + "(" + id + ") " + C("MsgHasNoOwner"));
-					}
-				} else {
-					Send(p, RED + C("MsgPermissionDenied"));
-				}
-			} else {
-				Send(p, RED + C("MsgSellingPlotsIsDisabledWorld"));
-			}
-		} else {
-			Send(p, RED + C("MsgEconomyDisabledWorld"));
-		}
-		return true;
-	}
 
 	private boolean dispose(Player p, String[] args) {
 		if (PlotMe.cPerms(p, "PlotMe.admin.dispose") || PlotMe.cPerms(p, "PlotMe.use.dispose")) {
@@ -605,43 +233,6 @@ public class PMCommand implements CommandExecutor {
 							PlotMapInfo pmi = PlotManager.getMap(p);
 
 							double cost = pmi.DisposePrice;
-
-							if (PlotManager.isEconomyEnabled(p)) {
-								if (cost != 0 && PlotMe.economy.getBalance(p) < cost) {
-									Send(p, RED + C("MsgNotEnoughDispose"));
-									return true;
-								}
-
-								EconomyResponse er = PlotMe.economy.withdrawPlayer(p, cost);
-
-								if (!er.transactionSuccess()) {
-									Send(p, RED + er.errorMessage);
-									warn(er.errorMessage);
-									return true;
-								}
-
-								if (plot.auctionned) {
-									String currentbidder = plot.currentbidder;
-									OfflinePlayer playercurrentbidder = Bukkit.getOfflinePlayer(plot.currentbidderId);
-
-									if (!currentbidder.equals("")) {
-										EconomyResponse er2 = PlotMe.economy.depositPlayer(playercurrentbidder, plot.currentbid);
-
-										if (!er2.transactionSuccess()) {
-											Send(p, RED + er2.errorMessage);
-											warn(er2.errorMessage);
-										} else {
-											for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-												if (player.getName().equalsIgnoreCase(currentbidder)) {
-													Send(player, C("WordPlot") +
-															             " " + id + " " + C("MsgOwnedBy") + " " + plot.owner + " " + C("MsgWasDisposed") + " " + f(cost));
-													break;
-												}
-											}
-										}
-									}
-								}
-							}
 
 							World w = p.getWorld();
 
@@ -673,161 +264,7 @@ public class PMCommand implements CommandExecutor {
 		return true;
 	}
 
-	private boolean sell(Player p, String[] args) {
-		if (PlotManager.isEconomyEnabled(p)) {
-			PlotMapInfo pmi = PlotManager.getMap(p);
 
-			if (pmi.CanSellToBank || pmi.CanPutOnSale) {
-				if (PlotMe.cPerms(p, "PlotMe.use.sell") || PlotMe.cPerms(p, "PlotMe.admin.sell")) {
-					Location l = p.getLocation();
-					String id = PlotManager.getPlotId(l);
-
-					if (id.equals("")) {
-						Send(p, RED + C("MsgNoPlotFound"));
-					} else if (!PlotManager.isPlotAvailable(id, p)) {
-						Plot plot = PlotManager.getPlotById(p, id);
-
-						if (plot.owner.equalsIgnoreCase(p.getName()) || PlotMe.cPerms(p, "PlotMe.admin.sell")) {
-							World w = p.getWorld();
-							String name = p.getName();
-
-							if (plot.forsale) {
-								plot.customprice = 0;
-								plot.forsale = false;
-
-								plot.updateField("customprice", 0);
-								plot.updateField("forsale", false);
-
-								PlotManager.adjustWall(l);
-								PlotManager.setSellSign(w, plot);
-
-								Send(p, C("MsgPlotNoLongerSale"));
-
-								if (isAdv) {
-									PlotMe.logger.info(LOG + name + " " + C("MsgRemovedPlot") + " " + id + " " + C("MsgFromBeingSold"));
-								}
-							} else {
-								double price = pmi.SellToPlayerPrice;
-								boolean bank = false;
-
-								if (args.length == 2) {
-									if (args[1].equalsIgnoreCase("bank")) {
-										bank = true;
-									} else if (pmi.CanCustomizeSellPrice) {
-										try {
-											price = Double.parseDouble(args[1]);
-										} catch (Exception e) {
-											if (pmi.CanSellToBank) {
-												Send(p, C("WordUsage") + ": " + RED + " /plotme " + C("CommandSellBank") + "|<" + C("WordAmount") + ">");
-												p.sendMessage("  " + C("WordExample") + ": " + RED + "/plotme " + C("CommandSellBank") + " " + RESET + " or " + RED + " /plotme " + C("CommandSell") + " 200");
-											} else {
-												Send(p, C("WordUsage") + ": " + RED +
-														        " /plotme " + C("CommandSell") + " <" + C("WordAmount") + ">" + RESET +
-														        " " + C("WordExample") + ": " + RED + "/plotme " + C("CommandSell") + " 200");
-											}
-										}
-									} else {
-										Send(p, RED + C("MsgCannotCustomPriceDefault") + " " + price);
-										return true;
-									}
-								}
-
-								if (bank) {
-									if (!pmi.CanSellToBank) {
-										Send(p, RED + C("MsgCannotSellToBank"));
-									} else {
-
-										String currentbidder = plot.currentbidder;										
-
-										if (!currentbidder.equals("")) {
-											double bid = plot.currentbid;
-											OfflinePlayer playercurrentbidder = Bukkit.getOfflinePlayer(plot.currentbidderId);
-
-											EconomyResponse er = PlotMe.economy.depositPlayer(playercurrentbidder, bid);
-
-											if (!er.transactionSuccess()) {
-												Send(p, RED + er.errorMessage);
-												warn(er.errorMessage);
-											} else {
-												for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-													if (player.getName().equalsIgnoreCase(currentbidder)) {
-														Send(player, C("WordPlot") + " " + id + " " + C("MsgOwnedBy") + " " + plot.owner + " " + C("MsgSoldToBank") + " " + f(bid));
-														break;
-													}
-												}
-											}
-										}
-
-										double sellprice = pmi.SellToBankPrice;
-
-										EconomyResponse er = PlotMe.economy.depositPlayer(p, sellprice);
-
-										if (er.transactionSuccess()) {
-											plot.owner = "$Bank$";
-											plot.forsale = true;
-											plot.customprice = pmi.BuyFromBankPrice;
-											plot.auctionned = false;
-											plot.currentbidder = "";
-											plot.currentbid = 0;
-
-											plot.removeAllAllowed();
-
-											PlotManager.setOwnerSign(w, plot);
-											PlotManager.setSellSign(w, plot);
-
-											plot.updateField("owner", plot.owner);
-											plot.updateField("forsale", true);
-											plot.updateField("auctionned", true);
-											plot.updateField("customprice", plot.customprice);
-											plot.updateField("currentbidder", "");
-											plot.updateField("currentbid", 0);
-
-											Send(p, C("MsgPlotSold") + " " + f(sellprice));
-
-											if (isAdv) {
-												PlotMe.logger.info(LOG + name + " " + C("MsgSoldToBankPlot") + " " + id + " " + C("WordFor") + " " + sellprice);
-											}
-										} else {
-											Send(p, " " + er.errorMessage);
-											warn(er.errorMessage);
-										}
-									}
-								} else if (price < 0) {
-									Send(p, RED + C("MsgInvalidAmount"));
-								} else {
-									plot.customprice = price;
-									plot.forsale = true;
-
-									plot.updateField("customprice", price);
-									plot.updateField("forsale", true);
-
-									PlotManager.adjustWall(l);
-									PlotManager.setSellSign(w, plot);
-
-									Send(p, C("MsgPlotForSale"));
-
-									if (isAdv) {
-										PlotMe.logger.info(LOG + name + " " + C("MsgPutOnSalePlot") + " " + id + " " + C("WordFor") + " " + price);
-									}
-								}
-							}
-						} else {
-							Send(p, RED + C("MsgDoNotOwnPlot"));
-						}
-					} else {
-						Send(p, RED + C("MsgThisPlot") + "(" + id + ") " + C("MsgHasNoOwner"));
-					}
-				} else {
-					Send(p, RED + C("MsgPermissionDenied"));
-				}
-			} else {
-				Send(p, RED + C("MsgSellingPlotsIsDisabledWorld"));
-			}
-		} else {
-			Send(p, RED + C("MsgEconomyDisabledWorld"));
-		}
-		return true;
-	}
 
 	private boolean protect(Player p, String[] args) {
 		if (PlotMe.cPerms(p, "PlotMe.admin.protect") || PlotMe.cPerms(p, "PlotMe.use.protect")) {
@@ -860,24 +297,6 @@ public class PMCommand implements CommandExecutor {
 							PlotMapInfo pmi = PlotManager.getMap(p);
 
 							double cost = 0;
-
-							if (PlotManager.isEconomyEnabled(p)) {
-								cost = pmi.ProtectPrice;
-
-								if (PlotMe.economy.getBalance(p) < cost) {
-									Send(p, RED + C("MsgNotEnoughProtectPlot"));
-									return true;
-								} else {
-									EconomyResponse er = PlotMe.economy.withdrawPlayer(p, cost);
-
-									if (!er.transactionSuccess()) {
-										Send(p, RED + er.errorMessage);
-										warn(er.errorMessage);
-										return true;
-									}
-								}
-
-							}
 
 							plot.protect = true;
 							PlotManager.adjustWall(p.getLocation());
@@ -1694,23 +1113,6 @@ public class PMCommand implements CommandExecutor {
 
 										double price = 0;
 
-										if (PlotManager.isEconomyEnabled(w)) {
-											price = pmi.ClaimPrice;
-											double balance = PlotMe.economy.getBalance(p);
-
-											if (balance >= price) {
-												EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-												if (!er.transactionSuccess()) {
-													Send(p, RED + er.errorMessage);
-													warn(er.errorMessage);
-													return true;
-												}
-											} else {
-												Send(p, RED + C("MsgNotEnoughAuto") + " " + C("WordMissing") + " " + RESET + f(price - balance, false));
-												return true;
-											}
-										}
 
 										Plot plot = PlotManager.createPlot(w, id, name, uuid);
 
@@ -1774,25 +1176,6 @@ public class PMCommand implements CommandExecutor {
 									UUID uuid = p.getUniqueId();
 
 									double price = 0;
-
-									if (PlotManager.isEconomyEnabled(w)) {
-										price = pmi.ClaimPrice;
-										double balance = PlotMe.economy.getBalance(p);
-
-										if (balance >= price) {
-											EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-											if (!er.transactionSuccess()) {
-												Send(p, RED + er.errorMessage);
-												warn(er.errorMessage);
-												return true;
-											}
-										} else {
-											Send(p, RED + C("MsgNotEnoughAuto") + " " + C("WordMissing") + " " + RESET + f(price - balance, false));
-											return true;
-										}
-									}
-
 									Plot plot = PlotManager.createPlot(w, id, name, uuid);
 
 									//PlotManager.adjustLinkedPlots(id, w);
@@ -1853,25 +1236,6 @@ public class PMCommand implements CommandExecutor {
 						PlotMapInfo pmi = PlotManager.getMap(w);
 
 						double price = 0;
-
-						if (PlotManager.isEconomyEnabled(w)) {
-							price = pmi.ClaimPrice;
-							double balance = PlotMe.economy.getBalance(p);
-
-							if (balance >= price) {
-								EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-								if (!er.transactionSuccess()) {
-									Send(p, RED + er.errorMessage);
-									warn(er.errorMessage);
-									return true;
-								}
-							} else {
-								Send(p, RED + C("MsgNotEnoughBuy") + " " + C("WordMissing") + " " + RESET + (price - balance) + RED + " " + PlotMe.economy.currencyNamePlural());
-								return true;
-							}
-						}
-
 						Plot plot = PlotManager.createPlot(w, id, playername, uuid);
 
 						//PlotManager.adjustLinkedPlots(id, w);
@@ -1969,24 +1333,6 @@ public class PMCommand implements CommandExecutor {
 									PlotMapInfo pmi = PlotManager.getMap(w);
 
 									double price = 0;
-
-									if (PlotManager.isEconomyEnabled(w)) {
-										price = pmi.PlotHomePrice;
-										double balance = PlotMe.economy.getBalance(p);
-
-										if (balance >= price) {
-											EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-											if (!er.transactionSuccess()) {
-												Send(p, RED + er.errorMessage);
-												return true;
-											}
-										} else {
-											Send(p, RED + C("MsgNotEnoughTp") + " " + C("WordMissing") + " " + RESET + f(price - balance, false));
-											return true;
-										}
-									}
-
 									p.teleport(PlotManager.getPlotHome(w, plot));
 
 									if (price != 0) {
@@ -2079,24 +1425,6 @@ public class PMCommand implements CommandExecutor {
 								PlotMapInfo pmi = PlotManager.getMap(w);
 
 								double price = 0;
-
-								if (PlotManager.isEconomyEnabled(w)) {
-									price = pmi.PlotHomePrice;
-									double balance = PlotMe.economy.getBalance(p);
-
-									if (balance >= price) {
-										EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-										if (!er.transactionSuccess()) {
-											Send(p, RED + er.errorMessage);
-											return true;
-										}
-									} else {
-										Send(p, RED + C("MsgNotEnoughTp") + " " + C("WordMissing") + " " + RESET + f(price - balance, false));
-										return true;
-									}
-								}
-
 								p.teleport(PlotManager.getPlotHome(w, plot));
 
 								if (price != 0) {
@@ -2197,25 +1525,6 @@ public class PMCommand implements CommandExecutor {
 					UUID uuid = p.getUniqueId();
 
 					double price = 0;
-
-					if (PlotManager.isEconomyEnabled(w)) {
-						price = pmi.AddCommentPrice;
-						double balance = PlotMe.economy.getBalance(p);
-
-						if (balance >= price) {
-							EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-							if (!er.transactionSuccess()) {
-								Send(p, RED + er.errorMessage);
-								warn(er.errorMessage);
-								return true;
-							}
-						} else {
-							Send(p, RED + C("MsgNotEnoughComment") + " " + C("WordMissing") + " " + RESET + f(price - balance, false));
-							return true;
-						}
-					}
-
 					Plot plot = PlotManager.getPlotById(p, id);
 
 					String text = StringUtils.join(args, " ");
@@ -2312,25 +1621,6 @@ public class PMCommand implements CommandExecutor {
 								PlotMapInfo pmi = PlotManager.getMap(w);
 
 								double price = 0;
-
-								if (PlotManager.isEconomyEnabled(w)) {
-									price = pmi.BiomeChangePrice;
-									double balance = PlotMe.economy.getBalance(p);
-
-									if (balance >= price) {
-										EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-										if (!er.transactionSuccess()) {
-											Send(p, RED + er.errorMessage);
-											warn(er.errorMessage);
-											return true;
-										}
-									} else {
-										Send(p, RED + C("MsgNotEnoughBiome") + " " + C("WordMissing") + " " + RESET + f(price - balance, false));
-										return true;
-									}
-								}
-
 								PlotManager.setBiome(w, id, plot, biome);
 
 								Send(p, C("MsgBiomeSet") + " " + ChatColor.BLUE + FormatBiome(biome.name()) + " " + f(-price));
@@ -2450,48 +1740,6 @@ public class PMCommand implements CommandExecutor {
 					PlotManager.clear(w, plot);
 					//RemoveLWC(w, plot);
 
-					if (PlotManager.isEconomyEnabled(p)) {
-						if (plot.auctionned) {
-							String currentbidder = plot.currentbidder;
-
-							if (!currentbidder.equals("")) {
-								OfflinePlayer playercurrentbidder = Bukkit.getOfflinePlayer(plot.currentbidderId);
-								EconomyResponse er = PlotMe.economy.depositPlayer(playercurrentbidder, plot.currentbid);
-
-								if (!er.transactionSuccess()) {
-									Send(p, er.errorMessage);
-									warn(er.errorMessage);
-								} else {
-									for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-										if (player.getName().equalsIgnoreCase(currentbidder)) {
-											Send(player, C("WordPlot") + " " + id + " " + C("MsgOwnedBy") + " " + plot.owner + " " + C("MsgWasReset") + " " + f(plot.currentbid));
-											break;
-										}
-									}
-								}
-							}
-						}
-
-						PlotMapInfo pmi = PlotManager.getMap(p);
-
-						if (pmi.RefundClaimPriceOnReset) {
-							OfflinePlayer playerowner = Bukkit.getOfflinePlayer(plot.ownerId);
-							EconomyResponse er = PlotMe.economy.depositPlayer(playerowner, pmi.ClaimPrice);
-
-							if (!er.transactionSuccess()) {
-								Send(p, RED + er.errorMessage);
-								warn(er.errorMessage);
-								return true;
-							} else {
-								for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-									if (player.getName().equalsIgnoreCase(plot.owner)) {
-										Send(player, C("WordPlot") + " " + id + " " + C("MsgOwnedBy") + " " + plot.owner + " " + C("MsgWasReset") + " " + f(pmi.ClaimPrice));
-										break;
-									}
-								}
-							}
-						}
-					}
 
 					if (!PlotManager.isPlotAvailable(id, p)) {
 						PlotManager.getPlots(p).remove(id);
@@ -2540,23 +1788,6 @@ public class PMCommand implements CommandExecutor {
 
 							double price = 0;
 
-							if (PlotManager.isEconomyEnabled(w)) {
-								price = pmi.ClearPrice;
-								double balance = PlotMe.economy.getBalance(p);
-
-								if (balance >= price) {
-									EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-									if (!er.transactionSuccess()) {
-										Send(p, RED + er.errorMessage);
-										warn(er.errorMessage);
-										return true;
-									}
-								} else {
-									Send(p, RED + C("MsgNotEnoughClear") + " " + C("WordMissing") + " " + RESET + (price - balance) + RED + " " + PlotMe.economy.currencyNamePlural());
-									return true;
-								}
-							}
 
 							PlotManager.clear(w, plot);
 							//RemoveLWC(w, plot, p);
@@ -2608,24 +1839,6 @@ public class PMCommand implements CommandExecutor {
 
 								double price = 0;
 
-								if (PlotManager.isEconomyEnabled(w)) {
-									price = pmi.AddPlayerPrice;
-									double balance = PlotMe.economy.getBalance(p);
-
-									if (balance >= price) {
-										EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-										if (!er.transactionSuccess()) {
-											Send(p, RED + er.errorMessage);
-											warn(er.errorMessage);
-											return true;
-										}
-									} else {
-										Send(p, RED + C("MsgNotEnoughAdd") + " " + C("WordMissing") + " " + RESET + f(price - balance, false));
-										return true;
-									}
-								}
-
 								plot.addAllowed(allowed);
 								plot.removeDenied(allowed);
 
@@ -2675,25 +1888,6 @@ public class PMCommand implements CommandExecutor {
 								PlotMapInfo pmi = PlotManager.getMap(w);
 
 								double price = 0;
-
-								if (PlotManager.isEconomyEnabled(w)) {
-									price = pmi.DenyPlayerPrice;
-									double balance = PlotMe.economy.getBalance(p);
-
-									if (balance >= price) {
-										EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-										if (!er.transactionSuccess()) {
-											Send(p, RED + er.errorMessage);
-											warn(er.errorMessage);
-											return true;
-										}
-									} else {
-										Send(p, RED + C("MsgNotEnoughDeny") + " " + C("WordMissing") + " " + RESET + f(price - balance, false));
-										return true;
-									}
-								}
-
 								plot.addDenied(denied);
 								plot.removeAllowed(denied);
 
@@ -2763,25 +1957,6 @@ public class PMCommand implements CommandExecutor {
 								PlotMapInfo pmi = PlotManager.getMap(w);
 
 								double price = 0;
-
-								if (PlotManager.isEconomyEnabled(w)) {
-									price = pmi.RemovePlayerPrice;
-									double balance = PlotMe.economy.getBalance(p);
-
-									if (balance >= price) {
-										EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-										if (!er.transactionSuccess()) {
-											Send(p, RED + er.errorMessage);
-											warn(er.errorMessage);
-											return true;
-										}
-									} else {
-										Send(p, RED + C("MsgNotEnoughRemove") + " " + C("WordMissing") + " " + RESET + f(price - balance, false));
-										return true;
-									}
-								}
-
 								if (allowed.startsWith("group:")) {
 									plot.removeAllowedGroup(allowed);
 								} else {
@@ -2834,25 +2009,6 @@ public class PMCommand implements CommandExecutor {
 								PlotMapInfo pmi = PlotManager.getMap(w);
 
 								double price = 0;
-
-								if (PlotManager.isEconomyEnabled(w)) {
-									price = pmi.UndenyPlayerPrice;
-									double balance = PlotMe.economy.getBalance(p);
-
-									if (balance >= price) {
-										EconomyResponse er = PlotMe.economy.withdrawPlayer(p, price);
-
-										if (!er.transactionSuccess()) {
-											Send(p, RED + er.errorMessage);
-											warn(er.errorMessage);
-											return true;
-										}
-									} else {
-										Send(p, RED + C("MsgNotEnoughUndeny") + " " + C("WordMissing") + " " + RESET + f(price - balance, false));
-										return true;
-									}
-								}
-
 								if (denied.startsWith("group:")) {
 									plot.removeDeniedGroup(denied);
 								} else {
@@ -2902,42 +2058,6 @@ public class PMCommand implements CommandExecutor {
 						PlotMapInfo pmi = PlotManager.getMap(p);
 						oldowner = plot.owner;
 						OfflinePlayer playeroldowner = Bukkit.getOfflinePlayer(plot.ownerId);
-
-						if (PlotManager.isEconomyEnabled(p)) {
-							if (pmi.RefundClaimPriceOnSetOwner && newowner != oldowner) {
-								EconomyResponse er = PlotMe.economy.depositPlayer(playeroldowner, pmi.ClaimPrice);
-
-								if (!er.transactionSuccess()) {
-									Send(p, RED + er.errorMessage);
-									warn(er.errorMessage);
-									return true;
-								} else {
-									for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-										if (player.getName().equalsIgnoreCase(oldowner)) {
-											Send(player, C("MsgYourPlot") + " " + id + " " + C("MsgNowOwnedBy") + " " + newowner + ". " + f(pmi.ClaimPrice));
-											break;
-										}
-									}
-								}
-							}
-
-							if (plot.currentbidder != null && !plot.currentbidder.equals("")) {
-								OfflinePlayer playercurrentbidder = Bukkit.getOfflinePlayer(plot.currentbidderId);
-								EconomyResponse er = PlotMe.economy.depositPlayer(playercurrentbidder, plot.currentbid);
-
-								if (!er.transactionSuccess()) {
-									Send(p, er.errorMessage);
-									warn(er.errorMessage);
-								} else {
-									for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-										if (player.getName().equalsIgnoreCase(plot.currentbidder)) {
-											Send(player, C("WordPlot") + " " + id + " " + C("MsgChangedOwnerFrom") + " " + oldowner + " " + C("WordTo") + " " + newowner + ". " + f(plot.currentbid));
-											break;
-										}
-									}
-								}
-							}
-						}
 
 						plot.currentbidder = "";
 						plot.currentbidderId = null;
@@ -3075,10 +2195,6 @@ public class PMCommand implements CommandExecutor {
 		}
 
 		String format = round(Math.abs(price));
-
-		if (PlotMe.economy != null) {
-			format = (price <= 1 && price >= -1) ? format + " " + PlotMe.economy.currencyNameSingular() : format + " " + PlotMe.economy.currencyNamePlural();
-		}
 
 		if (showsign) {
 			return GREEN + ((price > 0) ? "+" + format : "-" + format);

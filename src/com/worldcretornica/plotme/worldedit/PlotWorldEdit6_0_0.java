@@ -1,17 +1,18 @@
 package com.worldcretornica.plotme.worldedit;
 
+import com.sk89q.worldedit.math.BlockVector3;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import com.sk89q.worldedit.LocalSession;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.function.mask.Mask;
 import com.sk89q.worldedit.function.mask.RegionMask;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.worldcretornica.plotme.Plot;
 import com.worldcretornica.plotme.PlotManager;
 import com.worldcretornica.plotme.PlotMe;
+import org.bukkit.util.Vector;
 
 public class PlotWorldEdit6_0_0 implements PlotWorldEdit {
 	
@@ -43,8 +44,8 @@ public class PlotWorldEdit6_0_0 implements PlotWorldEdit {
 				LocalSession localsession = PlotMe.worldeditplugin.getSession(p);
 				com.sk89q.worldedit.world.World world = localsession.getSelectionWorld();
 						
-				Vector pos1 = new Vector(bottom.getBlockX(), bottom.getBlockY(), bottom.getBlockZ());
-				Vector pos2 = new Vector(top.getBlockX(), top.getBlockY(), top.getBlockZ());
+				BlockVector3 pos1 = BlockVector3.at(bottom.getBlockX(), bottom.getBlockY(), bottom.getBlockZ());
+				BlockVector3 pos2 = BlockVector3.at(top.getBlockX(), top.getBlockY(), top.getBlockZ());
 						
 				CuboidRegion cr = new CuboidRegion(world, pos1, pos2);
 				
@@ -64,9 +65,9 @@ public class PlotWorldEdit6_0_0 implements PlotWorldEdit {
 		{
 			LocalSession localsession = PlotMe.worldeditplugin.getSession(p);
 			com.sk89q.worldedit.world.World world = localsession.getSelectionWorld();
-					
-			Vector pos1 = new Vector(bottom.getBlockX(), bottom.getBlockY(), bottom.getBlockZ());
-			Vector pos2 = new Vector(top.getBlockX(), top.getBlockY(), top.getBlockZ());
+
+			BlockVector3 pos1 = BlockVector3.at(bottom.getBlockX(), bottom.getBlockY(), bottom.getBlockZ());
+			BlockVector3 pos2 = BlockVector3.at(top.getBlockX(), top.getBlockY(), top.getBlockZ());
 					
 			CuboidRegion cr = new CuboidRegion(world, pos1, pos2);
 			

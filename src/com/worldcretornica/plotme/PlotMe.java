@@ -1,13 +1,10 @@
 package com.worldcretornica.plotme;
 
-import com.griefcraft.model.Protection;
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.worldcretornica.plotme.listener.PlotDenyListener;
 import com.worldcretornica.plotme.listener.PlotListener;
 import com.worldcretornica.plotme.listener.PlotWorldEditListener;
 import com.worldcretornica.plotme.worldedit.PlotWorldEdit;
-
-import net.milkbowl.vault.economy.Economy;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -22,8 +19,7 @@ import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.mcstats.Metrics;
-import org.mcstats.Metrics.Graph;
+
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
@@ -55,7 +51,6 @@ public class PlotMe extends JavaPlugin
     
     public static WorldEditPlugin worldeditplugin = null;
     public static PlotWorldEdit plotworldedit = null;
-    public static Economy economy = null;
     public static Boolean usinglwc = false;
     
     private static HashSet<String> playersignoringwelimit = null;
@@ -92,7 +87,6 @@ public class PlotMe extends JavaPlugin
 		plotmaps = null;
 		configpath = null;
 		worldeditplugin = null;
-		economy = null;
 		usinglwc = null;
 		playersignoringwelimit = null;
 		captions = null;
@@ -113,16 +107,9 @@ public class PlotMe extends JavaPlugin
 	    
 	    initialize();
 		
-		doMetric();
-		
 		PluginManager pm = getServer().getPluginManager();
 				
 		pm.registerEvents(new PlotListener(), this);
-		
-		if(pm.getPlugin("Vault") != null)
-		{
-			setupEconomy();
-		}
 		
 		if(pm.getPlugin("WorldEdit") != null)
 		{
@@ -160,72 +147,6 @@ public class PlotMe extends JavaPlugin
 		SqlManager.plotConvertToUUIDAsynchronously();
 	}
 
-	
-	private void doMetric()
-	{
-		try
-		{
-		    Metrics metrics = new Metrics(this);
-		    
-		    Graph graphNbWorlds = metrics.createGraph("Plot worlds");
-		    
-		    graphNbWorlds.addPlotter(new Metrics.Plotter("Number of plot worlds")
-		    {
-				@Override
-				public int getValue() 
-				{
-					return plotmaps.size();
-				}
-			});
-		    	    
-		    graphNbWorlds.addPlotter(new Metrics.Plotter("Average Plot size")
-		    {
-				@Override
-				public int getValue() 
-				{
-					
-					if(plotmaps.size() > 0)
-					{
-						int totalplotsize = 0;
-						
-						for(PlotMapInfo p : plotmaps.values())
-						{
-							totalplotsize += p.PlotSize;
-						}
-						
-						
-						return totalplotsize / plotmaps.size();
-					}
-					else
-					{
-						return 0;
-					}
-				}
-			});
-		    
-		    graphNbWorlds.addPlotter(new Metrics.Plotter("Number of plots")
-		    {
-				@Override
-				public int getValue() 
-				{
-					int nbplot = 0;
-					
-					for(PlotMapInfo p : plotmaps.values())
-					{
-						nbplot += p.plots.size();
-					}
-					
-					return nbplot;
-				}
-			});
-		    		    
-		    metrics.start();
-		} 
-		catch (IOException e) 
-		{
-		    // Failed to submit the stats :-(
-		}
-	}
 	
 	public ChunkGenerator getDefaultWorldGenerator(String worldname, String id)
 	{		
@@ -301,20 +222,20 @@ public class PlotMe extends JavaPlugin
 			plotworld.set("PathWidth", 7);
 			plotworld.set("PlotSize", 32);
 			
-			plotworld.set("BottomBlockId", "7");
-			plotworld.set("WallBlockId", "44");
-			plotworld.set("PlotFloorBlockId", "2");
-			plotworld.set("PlotFillingBlockId", "3");
-			plotworld.set("RoadMainBlockId", "5");
-			plotworld.set("RoadStripeBlockId", "5:2");
+			plotworld.set("BottomBlockId", Material.BEDROCK.name());
+			plotworld.set("WallBlockId", Material.STONE_SLAB.name());
+			plotworld.set("PlotFloorBlockId", Material.GRASS.name());
+			plotworld.set("PlotFillingBlockId", Material.DIRT.name());
+			plotworld.set("RoadMainBlockId", Material.OAK_PLANKS.name());
+			plotworld.set("RoadStripeBlockId", Material.BIRCH_PLANKS.name());
 			
 			plotworld.set("RoadHeight", 64);
 			plotworld.set("DaysToExpiration", 7);
 			plotworld.set("ProtectedBlocks", getDefaultProtectedBlocks());
 			plotworld.set("PreventedItems", getDefaultPreventedItems());
-			plotworld.set("ProtectedWallBlockId", "44:4");
-			plotworld.set("ForSaleWallBlockId", "44:1");
-			plotworld.set("AuctionWallBlockId", "44:1");
+			plotworld.set("ProtectedWallBlockId", Material.BEDROCK.name());
+			plotworld.set("ForSaleWallBlockId", Material.STONE_SLAB.name());
+			plotworld.set("AuctionWallBlockId", Material.STONE_SLAB.name());
 			plotworld.set("AutoLinkPlots", true);
 			plotworld.set("DisableExplosion", true);
 			plotworld.set("DisableIgnition", true);
@@ -362,19 +283,20 @@ public class PlotMe extends JavaPlugin
 			tempPlotInfo.PlotAutoLimit = currworld.getInt("PlotAutoLimit", 100);
 			tempPlotInfo.PathWidth = currworld.getInt("PathWidth", 7);
 			tempPlotInfo.PlotSize = currworld.getInt("PlotSize", 32);
-			
+
 			tempPlotInfo.BottomBlockId = getBlockId(currworld, "BottomBlockId", "7:0");
-			tempPlotInfo.BottomBlockValue = getBlockValue(currworld, "BottomBlockId", "7:0");
+			tempPlotInfo.BottomBlockValue = getBlockId(currworld, "BottomBlockId", "7:0");
 			tempPlotInfo.WallBlockId = getBlockId(currworld, "WallBlockId", "44:0");
-			tempPlotInfo.WallBlockValue = getBlockValue(currworld, "WallBlockId", "44:0");
+			tempPlotInfo.WallBlockValue = getBlockId(currworld, "WallBlockId", "44:0");
 			tempPlotInfo.PlotFloorBlockId = getBlockId(currworld, "PlotFloorBlockId", "2:0");
-			tempPlotInfo.PlotFloorBlockValue = getBlockValue(currworld, "PlotFloorBlockId", "2:0");
+			tempPlotInfo.PlotFloorBlockValue = getBlockId(currworld, "PlotFloorBlockId", "2:0");
 			tempPlotInfo.PlotFillingBlockId = getBlockId(currworld, "PlotFillingBlockId", "3:0");
-			tempPlotInfo.PlotFillingBlockValue = getBlockValue(currworld, "PlotFillingBlockId", "3:0");
+			tempPlotInfo.PlotFillingBlockValue = getBlockId(currworld, "PlotFillingBlockId", "3:0");
+			tempPlotInfo.PlotFillingBlockId = getBlockId(currworld, "PlotFillingBlockId", "3:0");;
 			tempPlotInfo.RoadMainBlockId = getBlockId(currworld, "RoadMainBlockId", "5:0");
-			tempPlotInfo.RoadMainBlockValue = getBlockValue(currworld, "RoadMainBlockId", "5:0");
+			tempPlotInfo.RoadMainBlockValue = getBlockId(currworld, "RoadMainBlockId", "5:0");
 			tempPlotInfo.RoadStripeBlockId = getBlockId(currworld, "RoadStripeBlockId", "5:2");
-			tempPlotInfo.RoadStripeBlockValue = getBlockValue(currworld, "RoadStripeBlockId", "5:2");
+			tempPlotInfo.RoadStripeBlockValue = getBlockId(currworld, "RoadStripeBlockId", "5:2");
 			
 			tempPlotInfo.RoadHeight = currworld.getInt("RoadHeight", currworld.getInt("WorldHeight", 64));
 			if(tempPlotInfo.RoadHeight > 250)
@@ -386,7 +308,7 @@ public class PlotMe extends JavaPlugin
 			
 			if(currworld.contains("ProtectedBlocks"))
 			{
-				tempPlotInfo.ProtectedBlocks = currworld.getIntegerList("ProtectedBlocks");
+				tempPlotInfo.ProtectedBlocks = currworld.getStringList("ProtectedBlocks");
 			}
 			else
 			{
@@ -443,12 +365,12 @@ public class PlotMe extends JavaPlugin
 			currworld.set("PathWidth", tempPlotInfo.PathWidth);
 			currworld.set("PlotSize", tempPlotInfo.PlotSize);
 			
-			currworld.set("BottomBlockId", getBlockValueId(tempPlotInfo.BottomBlockId, tempPlotInfo.BottomBlockValue));
-			currworld.set("WallBlockId", getBlockValueId(tempPlotInfo.WallBlockId, tempPlotInfo.WallBlockValue));
-			currworld.set("PlotFloorBlockId", getBlockValueId(tempPlotInfo.PlotFloorBlockId, tempPlotInfo.PlotFloorBlockValue));
-			currworld.set("PlotFillingBlockId", getBlockValueId(tempPlotInfo.PlotFillingBlockId, tempPlotInfo.PlotFillingBlockValue));
-			currworld.set("RoadMainBlockId", getBlockValueId(tempPlotInfo.RoadMainBlockId, tempPlotInfo.RoadMainBlockValue));
-			currworld.set("RoadStripeBlockId", getBlockValueId(tempPlotInfo.RoadStripeBlockId, tempPlotInfo.RoadStripeBlockValue));
+			currworld.set("BottomBlockId", getBlockValueId(tempPlotInfo.BottomBlockId));
+			currworld.set("WallBlockId", getBlockValueId(tempPlotInfo.WallBlockId));
+			currworld.set("PlotFloorBlockId", getBlockValueId(tempPlotInfo.PlotFloorBlockId));
+			currworld.set("PlotFillingBlockId", getBlockValueId(tempPlotInfo.PlotFillingBlockId));
+			currworld.set("RoadMainBlockId", getBlockValueId(tempPlotInfo.RoadMainBlockId));
+			currworld.set("RoadStripeBlockId", getBlockValueId(tempPlotInfo.RoadStripeBlockId));
 			
 			currworld.set("RoadHeight", tempPlotInfo.RoadHeight);
 			currworld.set("WorldHeight", null);
@@ -518,15 +440,19 @@ public class PlotMe extends JavaPlugin
 		
 		loadCaptions();
     }
+
+	private String getBlockValueId(Material bottomBlockId) {
+		return bottomBlockId.name().toString();
+	}
 	
-	private void setupEconomy()
+	/*private void setupEconomy()
     {
         RegisteredServiceProvider<Economy> economyProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.economy.Economy.class);
         if (economyProvider != null) 
         {
             economy = economyProvider.getProvider();
         }
-    }
+    }*/
 	
 	public static void addIgnoreWELimit(Player p)
 	{
@@ -622,27 +548,39 @@ public class PlotMe extends JavaPlugin
 	}
 	
 	@SuppressWarnings("deprecation")
-    private List<Integer> getDefaultProtectedBlocks()
+    private List<String> getDefaultProtectedBlocks()
 	{
-		List<Integer> protections = new ArrayList<Integer>();
+		List<String> protections = new ArrayList<String>();
 		
-		protections.add(Material.CHEST.getId());
-		protections.add(Material.FURNACE.getId());
-		protections.add(Material.BURNING_FURNACE.getId());
-		protections.add(Material.ENDER_PORTAL_FRAME.getId());
-		protections.add(Material.DIODE_BLOCK_ON.getId());
-		protections.add(Material.DIODE_BLOCK_OFF.getId());
-		protections.add(Material.JUKEBOX.getId());
-		protections.add(Material.NOTE_BLOCK.getId());
-		protections.add(Material.BED.getId());
-		protections.add(Material.CAULDRON.getId());
-		protections.add(Material.BREWING_STAND.getId());
-		protections.add(Material.BEACON.getId());
-		protections.add(Material.FLOWER_POT.getId());
-		protections.add(Material.ANVIL.getId());
-		protections.add(Material.DISPENSER.getId());
-		protections.add(Material.DROPPER.getId());
-		protections.add(Material.HOPPER.getId());
+		protections.add(Material.CHEST.name());
+		protections.add(Material.FURNACE.name());
+		protections.add(Material.ENDER_CHEST.name());
+		protections.add(Material.REDSTONE.name());
+		protections.add(Material.JUKEBOX.name());
+		protections.add(Material.NOTE_BLOCK.name());
+		protections.add(Material.YELLOW_BED.name());
+		protections.add(Material.BLACK_BED.name());
+		protections.add(Material.BLUE_BED.name());
+		protections.add(Material.BROWN_BED.name());
+		protections.add(Material.GRAY_BED.name());
+		protections.add(Material.GREEN_BED.name());
+		protections.add(Material.LIGHT_BLUE_BED.name());
+		protections.add(Material.LIGHT_GRAY_BED.name());
+		protections.add(Material.LIME_BED.name());
+		protections.add(Material.MAGENTA_BED.name());
+		protections.add(Material.ORANGE_BED.name());
+		protections.add(Material.PINK_BED.name());
+		protections.add(Material.PURPLE_BED.name());
+		protections.add(Material.RED_BED.name());
+		protections.add(Material.WHITE_BED.name());
+		protections.add(Material.CAULDRON.name());
+		protections.add(Material.BREWING_STAND.name());
+		protections.add(Material.BEACON.name());
+		protections.add(Material.FLOWER_POT.name());
+		protections.add(Material.ANVIL.name());
+		protections.add(Material.DISPENSER.name());
+		protections.add(Material.DROPPER.name());
+		protections.add(Material.HOPPER.name());
 		
 		return protections;
 	}
@@ -652,14 +590,16 @@ public class PlotMe extends JavaPlugin
 	{
 		List<String> preventeditems = new ArrayList<String>();
 
-		preventeditems.add("" + Material.INK_SACK.getId() + ":15");
-		preventeditems.add("" + Material.FLINT_AND_STEEL.getId());
-		preventeditems.add("" + Material.MINECART.getId());
-		preventeditems.add("" + Material.POWERED_MINECART.getId());
-		preventeditems.add("" + Material.STORAGE_MINECART.getId());
-		preventeditems.add("" + Material.HOPPER_MINECART.getId());
-		preventeditems.add("" + Material.BOAT.getId());
-		
+		preventeditems.add("" + Material.INK_SAC.name());
+		preventeditems.add("" + Material.FLINT_AND_STEEL.name());
+		preventeditems.add("" + Material.MINECART.name());
+		preventeditems.add("" + Material.HOPPER_MINECART.name());
+		preventeditems.add("" + Material.BIRCH_BOAT.name());
+		preventeditems.add("" + Material.ACACIA_BOAT.name());
+		preventeditems.add("" + Material.DARK_OAK_BOAT.name());
+		preventeditems.add("" + Material.JUNGLE_BOAT.name());
+		preventeditems.add("" + Material.OAK_BOAT.name());
+
 		return preventeditems;
 	}
 	
@@ -1088,70 +1028,20 @@ public class PlotMe extends JavaPlugin
 	{
 		return ChatColor.translateAlternateColorCodes('&', string);
     }
+
 	
-	public void scheduleProtectionRemoval(final Location bottom, final Location top)
-	{
-    	int x1 = bottom.getBlockX();
-    	int y1 = bottom.getBlockY();
-    	int z1 = bottom.getBlockZ();
-    	int x2 = top.getBlockX();
-    	int y2 = top.getBlockY();
-    	int z2 = top.getBlockZ();
-    	World w = bottom.getWorld();
-    	
-    	for(int x = x1; x <= x2; x++)
-    	{
-    		for(int z = z1; z <= z2; z++)
-    		{
-    			for(int y = y1; y <= y2; y++)
-    			{
-    				final Block block = w.getBlockAt(x, y, z);
-		
-					Bukkit.getScheduler().runTask(this, new Runnable() 
-					{
-					    public void run()
-					    {
-					    	Protection protection = com.griefcraft.lwc.LWC.getInstance().findProtection(block);
-							
-							if(protection != null)
-							{
-								protection.remove();
-							}
-					    }
-					});
-	    		}
-	    	}
-	    }
-	}
-	
-	private short getBlockId(ConfigurationSection cs, String section, String def)
+	private Material getBlockId(ConfigurationSection cs, String section, String def)
 	{
 		String idvalue = cs.getString(section, def.toString());
+
 		if(idvalue.indexOf(":") > 0)
 		{
-			return Short.parseShort(idvalue.split(":")[0]);
+			return Material.valueOf(idvalue.split(":")[0]);
 		}
 		else
 		{
-			return Short.parseShort(idvalue);
+			return Material.valueOf(idvalue);
 		}
 	}
 	
-	private byte getBlockValue(ConfigurationSection cs, String section, String def)
-	{
-		String idvalue = cs.getString(section, def.toString());
-		if(idvalue.indexOf(":") > 0)
-		{
-			return Byte.parseByte(idvalue.split(":")[1]);
-		}
-		else
-		{
-			return 0;
-		}
-	}
-	
-	private String getBlockValueId(Short id, Byte value)
-	{
-		return (value == 0) ? id.toString() : id.toString() + ":" + value.toString();
-	}
 }

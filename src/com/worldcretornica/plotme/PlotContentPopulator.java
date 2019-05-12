@@ -1,17 +1,19 @@
 package com.worldcretornica.plotme;
 
-import java.util.Random;
-
 import org.bukkit.Chunk;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.generator.BlockPopulator;
+
+import java.util.Random;
 
 public class PlotContentPopulator extends BlockPopulator {
     private double plotsize;
     private double pathsize;
 
-    private byte plotfloor;
-    private byte filling;
+    private Material plotfloor;
+    private Material filling;
 
     private int roadheight;
 
@@ -19,8 +21,8 @@ public class PlotContentPopulator extends BlockPopulator {
         plotsize = 32;
         pathsize = 7;
         roadheight = 64;
-        plotfloor = 0;
-        filling = 0;
+        plotfloor = Material.AIR;
+        filling = Material.AIR;
     }
 
     public PlotContentPopulator(PlotMapInfo pmi) {
@@ -72,8 +74,7 @@ public class PlotContentPopulator extends BlockPopulator {
         }
 	}
 
-    @SuppressWarnings("deprecation")
-    private void setData(World w, int x, int y, int z, byte val) {
-        w.getBlockAt(x, y, z).setData(val, false);
+    private void setData(World w, int x, int y, int z, Material material) {
+        w.getBlockAt(x, y, z).setType(material);
     }
 }
