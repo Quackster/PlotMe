@@ -23,11 +23,11 @@ public class PlotRoadPopulator extends BlockPopulator {
     public PlotRoadPopulator() {
         plotsize = 32;
         pathsize = 7;
-        wall = Material.AIR;
-        floor2 = Material.GRASS;
-        floor1 = Material.AIR;
-        pillarh1 = Material.COBBLESTONE;
-        pillarh2 = Material.WATER;
+        wall = Material.STONE_SLAB;
+        floor2 = Material.BIRCH_PLANKS;
+        floor1 = Material.OAK_PLANKS;
+        pillarh1 = Material.OAK_PLANKS;
+        pillarh2 = Material.OAK_PLANKS;
         roadheight = 64;
     }
 

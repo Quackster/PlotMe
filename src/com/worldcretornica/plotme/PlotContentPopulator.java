@@ -21,8 +21,8 @@ public class PlotContentPopulator extends BlockPopulator {
         plotsize = 32;
         pathsize = 7;
         roadheight = 64;
-        plotfloor = Material.AIR;
-        filling = Material.AIR;
+        plotfloor = Material.GRASS_BLOCK;
+        filling = Material.STONE;
     }
 
     public PlotContentPopulator(PlotMapInfo pmi) {
@@ -75,6 +75,6 @@ public class PlotContentPopulator extends BlockPopulator {
 	}
 
     private void setData(World w, int x, int y, int z, Material material) {
-        w.getBlockAt(x, y, z).setType(material);
+        w.getBlockAt(x, y, z).setType(material, false);
     }
 }

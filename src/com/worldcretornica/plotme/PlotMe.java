@@ -224,7 +224,7 @@ public class PlotMe extends JavaPlugin
 			
 			plotworld.set("BottomBlockId", Material.BEDROCK.name());
 			plotworld.set("WallBlockId", Material.STONE_SLAB.name());
-			plotworld.set("PlotFloorBlockId", Material.GRASS.name());
+			plotworld.set("PlotFloorBlockId", Material.GRASS_BLOCK.name());
 			plotworld.set("PlotFillingBlockId", Material.DIRT.name());
 			plotworld.set("RoadMainBlockId", Material.OAK_PLANKS.name());
 			plotworld.set("RoadStripeBlockId", Material.BIRCH_PLANKS.name());
